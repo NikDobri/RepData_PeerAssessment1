@@ -1,27 +1,70 @@
----
-title: "PA1_template"
-output: 
-  html_document: 
-    keep_md: true
----
+# PA1_template
 
 This document presents the analysis for the Course 5, Week 2 coding assignment.
 
 ## Set up of the environment
 
-```{r}
+
+```r
  setwd("/Users/nikolaydobrinov/Documents/work/Courses/R/WorkDirectory/Course5_week2_coding_assignment")
 library(dplyr)
+```
+
+```
+## 
+## Attaching package: 'dplyr'
+```
+
+```
+## The following objects are masked from 'package:stats':
+## 
+##     filter, lag
+```
+
+```
+## The following objects are masked from 'package:base':
+## 
+##     intersect, setdiff, setequal, union
+```
+
+```r
 library(lattice)
 library(ggplot2)
 ```
 
 ## Loading data and taking a quick look
-```{r}
+
+```r
  activity <- read.csv("./Data/activity.csv")
  dim(activity)
+```
+
+```
+## [1] 17568     3
+```
+
+```r
  head(activity)
+```
+
+```
+##   steps       date interval
+## 1    NA 2012-10-01        0
+## 2    NA 2012-10-01        5
+## 3    NA 2012-10-01       10
+## 4    NA 2012-10-01       15
+## 5    NA 2012-10-01       20
+## 6    NA 2012-10-01       25
+```
+
+```r
  table(is.na(activity))
+```
+
+```
+## 
+## FALSE  TRUE 
+## 50400  2304
 ```
 
 ## Task 1: What is mean total number of steps taken per day?
@@ -36,20 +79,36 @@ steps taken each day
 
 ### Analysis:
 First select only the needed variables, group by date and calculate totals by date
-```{r}
+
+```r
 activity1 <- select(activity, steps:date)
 activity1.1 <- group_by(activity1,date) 
 activity1.2 <- summarize(activity1.1,total.by.day=sum(steps, na.rm=T))
 ```
 Create a histogram of total steps per day
-```{r}
+
+```r
 hist(activity1.2$total.by.day, breaks=10, main="freq of total steps per day")
 ```
 
-The mean of total number of steps taken per day is `r mean(activity1.2$total.by.day)` and the median of total number of steps taken per day is `r median(activity1.2$total.by.day)`.
-```{r}
+![](PA1_template_files/figure-html/unnamed-chunk-4-1.png)<!-- -->
+
+The mean of total number of steps taken per day is 9354.2295082 and the median of total number of steps taken per day is 10395.
+
+```r
 mean(activity1.2$total.by.day)
+```
+
+```
+## [1] 9354.23
+```
+
+```r
 median(activity1.2$total.by.day)
+```
+
+```
+## [1] 10395
 ```
 
 ## Task 2: What is the average daily activity pattern?
@@ -64,7 +123,8 @@ contains the maximum number of steps?
 ### Analysis:
 First select only the needed variables, group by date and calculate means by interval
 
-```{r}
+
+```r
 activity2 <- select(activity, interval, steps)
 activity2.1 <- group_by(activity2,interval) 
 activity2.2 <- summarize(activity2.1,mean.by.interval=mean(steps, na.rm=T))
@@ -72,14 +132,25 @@ activity2.3 <- arrange(activity2.2,interval)
 ```
 
 Create a time series plot of mean steps by interval across all days
-```{r}
+
+```r
 with(activity2.3,plot(interval,mean.by.interval, main="mean steps by interval", type="l"))
 ```
 
-The interval that contains the maximum mean of steps taken across all days is `r activity2.3[which(activity2.3[,2]==max(activity2.3[,2])), 1]`. Note that this 
+![](PA1_template_files/figure-html/unnamed-chunk-7-1.png)<!-- -->
+
+The interval that contains the maximum mean of steps taken across all days is 835. Note that this 
 formulation of the code checks if the maximum is repeated in more than one interval
-```{r}
+
+```r
 activity2.3[which(activity2.3[,2]==max(activity2.3[,2])), 1]
+```
+
+```
+## # A tibble: 1 × 1
+##   interval
+##      <int>
+## 1      835
 ```
 
 ## Task 3: Imputing missing values
@@ -102,28 +173,37 @@ Note that there are a number of days/intervals where there are missing values
 ### Analysis:
 
 We first count the number of rows with NA in each column of the original dataset
-```{r}
+
+```r
 sapply(activity, function(x) sum(is.na(x)))
+```
+
+```
+##    steps     date interval 
+##     2304        0        0
 ```
 
 We impute missing steps by the average for interval by day of week, as it is likely 
  the steps pattern depends on the day of week. First format the dates as date and extract day of week
-```{r}
+
+```r
 activity$day <- weekdays(as.Date(activity$date))
 ```
 
 Group the data by day of week and interval to take means of the intervals by day of week. First 
  select only the needed variables, then group by day of week and interval and 
  calculate the means within these groups
- ```{r}
-activity3 <- select(activity, day, interval, steps)
-activity3.1 <- group_by(activity3,day,interval) 
-activity3.2 <- summarize(activity3.1,mean.by.day.interval=mean(steps, na.rm=T))
-activity3.3 <- arrange(activity3.2,day,interval)
-```
+ 
+ ```r
+ activity3 <- select(activity, day, interval, steps)
+ activity3.1 <- group_by(activity3,day,interval) 
+ activity3.2 <- summarize(activity3.1,mean.by.day.interval=mean(steps, na.rm=T))
+ activity3.3 <- arrange(activity3.2,day,interval)
+ ```
 We quickly check if steps trends differ by day of week by plotting the time series 
 of steps by interval and by day of week. 
-```{r}
+
+```r
 qplot(
         x = interval,
         y = mean.by.day.interval,
@@ -133,10 +213,13 @@ qplot(
 )
 ```
 
+![](PA1_template_files/figure-html/unnamed-chunk-12-1.png)<!-- -->
+
 To impute the missing values we merge the original activity data set with the 
 new activity3.3 dataset. Then we replace the NAs with the pre-calculated interval 
 means by day of week. This results in the new data set "activity3.5".
-```{r}
+
+```r
 merge_activity3.4 <- merge(activity, activity3.3, by=c("day","interval"))
 merge_activity3.4$steps.nonNA <- ifelse(is.na(merge_activity3.4$steps),
                                         merge_activity3.4$mean.by.day.interval,
@@ -145,7 +228,8 @@ activity3.5 <- select(merge_activity3.4,interval, date, steps.nonNA)
 ```
 
 Create the updated plot and compare with the original data. See Task 1 for more detail.
-```{r}
+
+```r
 activity3.6 <- select(activity3.5, date, steps.nonNA)
 activity3.7 <- group_by(activity3.6,date) 
 activity3.8 <- summarize(activity3.7,total.by.day=sum(steps.nonNA, na.rm=T))
@@ -155,26 +239,48 @@ hist(activity1.2$total.by.day, breaks=10, main="freq of total steps per day, exc
 hist(activity3.8$total.by.day, breaks=10, main="freq of total steps per day, imputed NA")
 ```
 
-The mean of total number of steps taken per day excluding NA is `r mean(activity1.2$total.by.day)`, while
-the mean of total number of steps taken per day imputing NA is `r mean(activity3.8$total.by.day)`.
-The median of total number of steps taken per day excluding NA is `r median(activity1.2$total.by.day)`, while
-the median of total number of steps taken per day imputing NA is `r median(activity3.8$total.by.day)`.
+![](PA1_template_files/figure-html/unnamed-chunk-14-1.png)<!-- -->
+
+The mean of total number of steps taken per day excluding NA is 9354.2295082, while
+the mean of total number of steps taken per day imputing NA is 1.082121\times 10^{4}.
+The median of total number of steps taken per day excluding NA is 10395, while
+the median of total number of steps taken per day imputing NA is 1.1015\times 10^{4}.
 
 Mean of total number of steps taken per day, exclude NA:
-```{r}
+
+```r
 mean(activity1.2$total.by.day)
 ```
+
+```
+## [1] 9354.23
+```
 Mean of total number of steps taken per day, impute NA:
-```{r}
+
+```r
 mean(activity3.8$total.by.day)
 ```
+
+```
+## [1] 10821.21
+```
 Median of total number of steps taken per day, exclude NA:
-```{r}
+
+```r
 median(activity1.2$total.by.day)
 ```
+
+```
+## [1] 10395
+```
 Median of total number of steps taken per day, impute NA:
-```{r}
+
+```r
 median(activity3.8$total.by.day)
+```
+
+```
+## [1] 11015
 ```
 
 ## Task 4: Are there differences in activity patterns between weekdays and weekends?
@@ -193,7 +299,8 @@ For this part the 𝚠𝚎𝚎𝚔𝚍𝚊𝚢𝚜() function may be of some hel
 ### Analysis:
 
 First, format the dates as date, extract day of week, and create the new required variable.
-```{r}
+
+```r
 activity4 <- activity3.5
 activity4$day <- weekdays(as.Date(activity3.5$date))
 activity4$weekday <- ifelse(activity4$day=="Saturday" | activity4$day=="Sunday",
@@ -202,16 +309,20 @@ activity4$weekday <- ifelse(activity4$day=="Saturday" | activity4$day=="Sunday",
 ```
 Group the data by weekday and interval to take means of the intervals by weekday.
 The resulting data set "activity4.3" houses these means.
-```{r}
+
+```r
 activity4.1 <- select(activity4, weekday, interval, steps.nonNA)
 activity4.2 <- group_by(activity4.1,weekday,interval) 
 activity4.3 <- summarize(activity4.2,mean.by.weekday.interval=mean(steps.nonNA, na.rm=T))
 ```
 
 Time series plot of interval steps by weekday
-```{r}
+
+```r
 library(lattice)
 xyplot(mean.by.weekday.interval~interval | weekday, data=activity4.3, layout=c(1,2), type="l")
 ```
+
+![](PA1_template_files/figure-html/unnamed-chunk-21-1.png)<!-- -->
 
 
